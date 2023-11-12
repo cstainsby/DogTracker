@@ -106,9 +106,16 @@ void initMPU6050() {
   }
   Serial.println("Connection Successful");
 
+  accelgyro.setXGyroOffset(220);
+  accelgyro.setYGyroOffset(76);
+  accelgyro.setZGyroOffset(-85);
+  accelgyro.setZAccelOffset(1788);
+
   // calibrate sensors 
   int calibrationCount = 0;
-  calibrationCount = calibrationCount + calibrateSensors(calibrationCount, 6);
+  calibrationCount = calibrationCount + calibrateSensors(calibrationCount, 15);
+  // calibrationCount = calibrationCount + calibrateSensors(calibrationCount, 1);
+  // calibrationCount = calibrationCount + calibrateSensors(calibrationCount, 1);
   // calibrationCount = calibrationCount + calibrateSensors(calibrationCount, 1);
   // calibrationCount = calibrationCount + calibrateSensors(calibrationCount, 1);
 }
@@ -142,8 +149,8 @@ void updateSmoothed(){
                             &RawValue[iGx], &RawValue[iGy], &RawValue[iGz]);
       // if ((i % 500) == 0) Serial.print('.');
 
-      // delayMicroseconds(3150); // hold sampling to 200hz
-      delayMicroseconds(100);
+      delayMicroseconds(3150); // hold sampling to 200hz
+      // delayMicroseconds(100);
       for (int j = iAx; j <= iGz; j++) {
         Sums[j] = Sums[j] + RawValue[j];
       }
@@ -158,15 +165,25 @@ void updateSmoothed(){
   }
 }
 
+float scaleAccelSmoothed(float smoothedDatapoint) {
+  float rawToMPerSSquare = 16384 / 9.81;
+  return smoothedDatapoint / rawToMPerSSquare;
+}
+
+float scaleRadiansSmoothed(float smoothedDataPoint) {
+  float rawToRad = 16384;
+  return smoothedDataPoint / rawToRad;
+}
+
 
 void printSmoothed() {
   Serial.printf(
-    "Acceleration: X: %d Y: %d Z: %d (m/s^2)\n",
-    smoothed[iAx], smoothed[iAy], smoothed[iAz]
+    "Acceleration: X: %f Y: %f Z: %f (m/s^2)\n",
+    scaleAccelSmoothed(smoothed[iAx]), scaleAccelSmoothed(smoothed[iAy]), scaleAccelSmoothed(smoothed[iAz])
   );
   Serial.printf(
-    "Orientation: X: %d Y: %d Z: %d (rad/s)\n",
-    smoothed[iGx], smoothed[iGy], smoothed[iGz]
+    "Orientation: X: %f Y: %f Z: %f (rad/s)\n",
+    scaleRadiansSmoothed(smoothed[iGx]), scaleRadiansSmoothed(smoothed[iGy]), scaleRadiansSmoothed(smoothed[iGz])
   );
   Serial.println("");
 }
